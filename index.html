@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Quant Scanner — Full OBI v15</title>
+    <style>
+        /* Styles same as v14, minor additions */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #0a0e17;
+            color: #e8edf5;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            padding: 12px;
+            font-size: 13px;
+        }
+        h1 {
+            font-size: 1.2rem;
+            text-align: center;
+            background: linear-gradient(135deg, #f0b90b, #f8d44d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 2px;
+        }
+        .sub {
+            text-align: center;
+            color: #8892a0;
+            font-size: 0.6rem;
+            margin-bottom: 10px;
+            letter-spacing: 0.3px;
+        }
+        .box {
+            background: #111927;
+            border-radius: 10px;
+            padding: 8px 12px;
+            margin: 4px 0 10px 0;
+            border: 1px solid #1e2a3a;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-bottom: 6px;
+        }
+        .box-header h3 {
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #e8edf5;
+        }
+        .badge {
+            font-size: 0.45rem;
+            font-weight: 700;
+            padding: 1px 8px;
+            border-radius: 12px;
+            background: #1e2a3a;
+            color: #8892a0;
+        }
+        .badge.gold {
+            background: #f0b90b;
+            color: #0a0e17;
+        }
+        .badge.green {
+            background: #0ecb81;
+            color: #0a0e17;
+        }
+        .badge.red {
+            background: #f6465d;
+            color: #fff;
+        }
+        .badge.purple {
+            background: #7c3aed;
+            color: #fff;
+        }
+        .fv-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 6px;
+            max-height: 420px;
+            overflow-y: auto;
+            padding: 4px 0;
+        }
+        .fv-item {
+            background: #0f1729;
+            border-radius: 8px;
+            padding: 6px 10px;
+            border: 1px solid #1e2a3a;
+            border-left: 3px solid #f0b90b;
+            transition: all 0.2s ease;
+            animation: fadeIn 0.3s ease;
+        }
+        .fv-item.unvalidated {
+            border-left-color: #5a6a7a;
+            opacity: 0.85;
+        }
+        .fv-item .row1 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .fv-item .sym {
+            font-weight: 700;
+            color: #f0b90b;
+            font-size: 0.8rem;
+        }
+        .fv-item .ai-score {
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 0 6px;
+            border-radius: 12px;
+            background: #7c3aed;
+            color: #fff;
+        }
+        .fv-item .ai-score.high {
+            background: #0ecb81;
+        }
+        .fv-item .ai-score.medium {
+            background: #f0b90b;
+            color: #0a0e17;
+        }
+        .fv-item .ai-score.low {
+            background: #f6465d;
+        }
+        .fv-item .row2 {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.6rem;
+            color: #8892a0;
+            margin-top: 2px;
+        }
+        .fv-item .row2 .price {
+            color: #e8edf5;
+            font-weight: 600;
+        }
+        .fv-item .row2 .diff {
+            font-weight: 600;
+        }
+        .fv-item .row2 .diff.positive {
+            color: #0ecb81;
+        }
+        .fv-item .row2 .diff.negative {
+            color: #f6465d;
+        }
+        .fv-item .row3 {
+            font-size: 0.5rem;
+            color: #5a6a7a;
+            margin-top: 2px;
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .fv-item .row3 span {
+            background: #0f1729;
+            padding: 0 4px;
+            border-radius: 3px;
+        }
+        .fv-item .row3 .label {
+            color: #5a6a7a;
+        }
+        .fv-item .row3 .value {
+            color: #e8edf5;
+            font-weight: 600;
+        }
+        .fv-item .row3 .value.na {
+            color: #5a6a7a;
+            font-weight: 400;
+            font-style: italic;
+        }
+        .fv-item .row3 .obi-live {
+            color: #0ecb81;
+        }
+        .fv-item .row3 .obi-connecting {
+            color: #f0b90b;
+        }
+        .fv-item .row3 .obi-unavailable {
+            color: #f6465d;
+        }
+        .fv-item .row4 {
+            font-size: 0.45rem;
+            color: #5a6a7a;
+            margin-top: 2px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .fv-item .row4 .bar-bg {
+            background: #1e2a3a;
+            border-radius: 4px;
+            height: 4px;
+            flex: 1;
+            min-width: 40px;
+        }
+        .fv-item .row4 .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .fv-item .row4 .bar-fill.bull {
+            background: #0ecb81;
+        }
+        .fv-item .row4 .bar-fill.bear {
+            background: #f6465d;
+        }
+        .fv-item .row5 {
+            font-size: 0.45rem;
+            margin-top: 3px;
+            padding-top: 3px;
+            border-top: 1px dashed #1e2a3a;
+        }
+        .fv-item .row5.validated {
+            color: #0ecb81;
+        }
+        .fv-item .row5.unvalidated {
+            color: #8892a0;
+        }
+        .fv-item .row6 {
+            font-size: 0.45rem;
+            margin-top: 2px;
+            color: #f0b90b;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .fv-empty {
+            color: #5a6a7a;
+            text-align: center;
+            padding: 20px;
+            font-size: 0.8rem;
+            width: 100%;
+        }
+        .status-bar {
+            background: #111927;
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 1px solid #1e2a3a;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 4px 14px;
+            font-size: 0.55rem;
+            color: #8892a0;
+        }
+        .status-bar .stat {
+            color: #f0b90b;
+            font-weight: 600;
+        }
+        .status-bar .stat.green {
+            color: #0ecb81;
+        }
+        .status-bar .stat.red {
+            color: #f6465d;
+        }
+        .status-bar .stat.purple {
+            color: #7c3aed;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            justify-content: center;
+            margin: 6px 0;
+        }
+        .controls input {
+            background: #0f1729;
+            border: 1px solid #1e2a3a;
+            border-radius: 6px;
+            padding: 4px 10px;
+            color: #e8edf5;
+            font-size: 0.6rem;
+            width: 100px;
+            outline: none;
+        }
+        .controls input:focus {
+            border-color: #f0b90b;
+        }
+        .controls button {
+            background: #1e2a3a;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 12px;
+            color: #e8edf5;
+            font-size: 0.6rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .controls button:hover {
+            background: #2a3a4a;
+        }
+        .controls button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .controls button.primary {
+            background: #f0b90b;
+            color: #0a0e17;
+        }
+        .controls button.primary:hover {
+            background: #d9a80a;
+        }
+        .controls button.danger {
+            background: #f6465d;
+            color: #fff;
+        }
+        .controls button.purple {
+            background: #7c3aed;
+            color: #fff;
+        }
+        .bt-panel {
+            display: none;
+            background: #111927;
+            border: 1px solid #f59e0b;
+            border-radius: 10px;
+            padding: 8px 12px;
+            margin: 4px 0 10px 0;
+            font-size: 0.6rem;
+        }
+        .bt-panel.show {
+            display: block;
+        }
+        .bt-panel h3 {
+            font-size: 0.75rem;
+            color: #f59e0b;
+            margin-bottom: 6px;
+        }
+        .bt-note {
+            color: #8892a0;
+            font-size: 0.55rem;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        .bt-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .bt-table th,
+        .bt-table td {
+            text-align: left;
+            padding: 3px 6px;
+            border-bottom: 1px solid #1e2a3a;
+            font-size: 0.55rem;
+        }
+        .bt-table th {
+            color: #5a6a7a;
+            font-weight: 600;
+        }
+        .bt-table td {
+            color: #e8edf5;
+        }
+        .bt-table .n-low {
+            color: #f6465d;
+        }
+        .bt-table .n-ok {
+            color: #0ecb81;
+        }
+        .bt-summary {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #1e2a3a;
+            color: #f0b90b;
+            font-weight: 600;
+            font-size: 0.6rem;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 10px;
+            color: #5a6a7a;
+            font-size: 0.5rem;
+        }
+        .fv-grid::-webkit-scrollbar {
+            width: 4px;
+        }
+        .fv-grid::-webkit-scrollbar-thumb {
+            background: #f0b90b;
+            border-radius: 4px;
+        }
+        .fv-grid::-webkit-scrollbar-track {
+            background: #0f1729;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @media(max-width:600px) {
+            .fv-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .fv-item {
+                padding: 4px 8px;
+            }
+            .fv-item .sym {
+                font-size: 0.7rem;
+            }
+            .fv-item .row2 {
+                font-size: 0.5rem;
+            }
+        }
+        @media(max-width:400px) {
+            .fv-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .disclaimer {
+            background: #1a0e0e;
+            border: 1px solid #f6465d40;
+            border-radius: 6px;
+            padding: 6px 10px;
+            margin: 6px 0;
+            font-size: 0.5rem;
+            color: #8892a0;
+            text-align: center;
+        }
+        .disclaimer strong {
+            color: #f0b90b;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧠 Quant Scanner — Full OBI v15</h1>
+    <p class="sub">⚡ Real OBI for EVERY displayed coin · Dynamic subscription · WebSocket auto-managed</p>
+    <div class="status-bar">
+        <span>📈 Coins: <span class="stat" id="totalCoins">0</span></span>
+        <span>🟢 Undervalued: <span class="stat green" id="undervaluedCount">0</span></span>
+        <span>🔴 Overvalued: <span class="stat red" id="overvaluedCount">0</span></span>
+        <span>⚖️ Fair: <span class="stat" id="fairCount">0</span></span>
+        <span>📊 Signals: <span class="stat purple" id="aiSignalCount">0</span></span>
+        <span>⏱ <span class="stat" id="lastUpdate">--</span></span>
+        <span id="wsStatus">🔌 Offline</span>
+    </div>
+    <div class="box">
+        <div class="box-header">
+            <h3>🎯 Fair Value + Heuristic Score <span class="badge gold">LIVE — 1h</span> <span class="badge">30s Poll</span></h3>
+            <span style="font-size:0.5rem;color:#5a6a7a;">✅ Every displayed coin gets real OBI · Up to 30 streams</span>
+        </div>
+        <div class="fv-grid" id="fvContainer">
+            <span class="fv-empty">⏳ Connecting to market data...</span>
+        </div>
+    </div>
+    <div class="bt-panel" id="btPanel">
+        <h3>🧪 Backtest Results (1h candles · Dynamic Thresholds)</h3>
+        <div class="bt-note" id="btNote"></div>
+        <table class="bt-table" id="btTable"></table>
+        <div class="bt-summary" id="btSummary"></div>
+    </div>
+    <div class="controls">
+        <input type="text" id="coinInput" placeholder="BTCUSDT" value="BTCUSDT" />
+        <button id="addBtn" class="primary">➕ Add</button>
+        <button id="scanBtn" class="primary">🔄 Scan</button>
+        <button id="loadTopBtn">📊 Top 20</button>
+        <button id="wsToggle" style="background:#7c3aed;color:#fff;">🔌 WS</button>
+        <button id="backtestBtn" style="background:#f59e0b;color:#0a0e17;">🧪 Backtest</button>
+        <button id="webhookBtn" style="background:#f6465d;color:#fff;">🔔 Webhook</button>
+    </div>
+    <div class="disclaimer">
+        ⚠️ <strong>Disclaimer:</strong> यह एक ह्यूरिस्टिक टूल है, financial advice नहीं। सभी सिग्नल heuristic scoring पर आधारित हैं, कोई गारंटी नहीं। अपनी जोखिम क्षमता के अनुसार ही ट्रेड करें।
+    </div>
+    <div class="footer">⚡ Binance Futures · Quant Engine v15 · Real OBI for ALL coins in dashboard</div>
+
+    <script>
+        // ================================================================
+        //  ★★★ QUANT SCANNER — FULL OBI v15 ★★★
+        //  FIX: OBI_STREAM_LIMIT = MAX_COINS (30)
+        //  Every coin displayed gets subscribed in WebSocket
+        //  Smart "connecting" state for fresh subscriptions
+        //  Fallback: "🚫 No orderbook" for symbols with no depth data
+        // ================================================================
+
+        // ──────────────────────────────────────────────────────────────
+        // 1. CORS PROXY CHAIN
+        // ──────────────────────────────────────────────────────────────
+        const PROXIES = [
+            (url) => url,
+            (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+            (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+            (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+            (url) => `https://thingproxy.freeboard.io/fetch/${url}`
+        ];
+
+        async function fetchWithTimeout(url, timeoutMs = 8000) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+                const res = await fetch(url, { signal: controller.signal });
+                clearTimeout(timer);
+                return res;
+            } catch (e) {
+                clearTimeout(timer);
+                throw e;
+            }
+        }
+
+        async function proxyFetch(url, retries = 2) {
+            for (let attempt = 0; attempt <= retries; attempt++) {
+                for (let i = 0; i < PROXIES.length; i++) {
+                    try {
+                        const res = await fetchWithTimeout(PROXIES[i](url), 8000);
+                        if (!res.ok) continue;
+                        const text = await res.text();
+                        try {
+                            const data = JSON.parse(text);
+                            if (data && typeof data === 'object' && !data.code) return data;
+                        } catch (e) { continue; }
+                    } catch (e) { continue; }
+                }
+                if (attempt < retries) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+            }
+            throw new Error('All proxies failed');
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // 2. CONSTANTS & STATE
+        // ──────────────────────────────────────────────────────────────
+        const FUTURES_BASE = 'https://fapi.binance.com';
+        const LIVE_INTERVAL_TF = '1h';
+        const LIVE_CANDLE_LIMIT = 60;
+        const UPDATE_INTERVAL = 30000;
+        const MAX_COINS = 30;
+        const MIN_SAMPLE_SIZE = 30;
+        const MIN_TEST_ACCURACY = 50;
+        const DEFAULT_THRESHOLD = 0.5;
+        const OBI_STREAM_LIMIT = MAX_COINS; // ← FIX: subscribe to ALL displayed coins
+        const OBI_STALE_MS = 5000;
+        const LOOKAHEAD_HOURS = 5;
+
+        let watchlist = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'DOGEUSDT', 'ADAUSDT', 'AVAXUSDT', 'DOTUSDT',
+            'LINKUSDT', 'MATICUSDT', 'UNIUSDT', 'ATOMUSDT', 'LTCUSDT', 'BCHUSDT', 'NEARUSDT', 'APTUSDT', 'ARBUSDT', 'OPUSDT',
+            'INJUSDT', 'FETUSDT', 'SUIUSDT', 'SEIUSDT', 'WIFUSDT', 'PEPEUSDT'
+        ];
+        let fairValueData = {};
+        let isScanning = false;
+        let backtestedThresholds = {};
+        let ws = null;
+        let wsConnected = false;
+        let wsReconnectTimer = null;
+        let wsMessageBuffer = [];
+        let wsFlushTimer = null;
+        let depthCache = {};
+        let streamedSymbols = new Set();
+        let btcTrend = 0;
+        let oiHistory = {};
+        // Track which symbols have ever received a depth update
+        let obiReceived = new Set();
+
+        const fvContainer = document.getElementById('fvContainer');
+        const totalCoinsEl = document.getElementById('totalCoins');
+        const undervaluedCountEl = document.getElementById('undervaluedCount');
+        const overvaluedCountEl = document.getElementById('overvaluedCount');
+        const fairCountEl = document.getElementById('fairCount');
+        const aiSignalCountEl = document.getElementById('aiSignalCount');
+        const lastUpdateEl = document.getElementById('lastUpdate');
+        const wsStatusEl = document.getElementById('wsStatus');
+
+        // ──────────────────────────────────────────────────────────────
+        // 3. WEBSOCKET - subscribes to ALL coins in watchlist (up to 30)
+        // ──────────────────────────────────────────────────────────────
+        function connectWebSocket() {
+            clearTimeout(wsReconnectTimer);
+            if (ws) {
+                try {
+                    ws.onopen = null;
+                    ws.onmessage = null;
+                    ws.onclose = null;
+                    ws.onerror = null;
+                    ws.close();
+                } catch (e) {}
+                ws = null;
+            }
+            if (wsFlushTimer) { clearInterval(wsFlushTimer);
+                wsFlushTimer = null; }
+
+            // Subscribe to ALL coins in watchlist (up to MAX_COINS)
+            const streamedList = watchlist.slice(0, OBI_STREAM_LIMIT);
+            streamedSymbols = new Set(streamedList);
+            obiReceived = new Set(); // reset on reconnect
+
+            // Clean stale cache
+            for (const cachedSym of Object.keys(depthCache)) {
+                if (!streamedSymbols.has(cachedSym)) delete depthCache[cachedSym];
+            }
+
+            if (streamedList.length === 0) {
+                wsConnected = false;
+                wsStatusEl.textContent = '🔌 No coins to stream';
+                wsStatusEl.style.color = '#8892a0';
+                return;
+            }
+
+            // Build stream URL with all symbols
+            const streams = streamedList.map(s => `${s.toLowerCase()}@depth10@100ms`).join('/');
+            const url = `wss://fstream.binance.com/stream?streams=${streams}`;
+            try {
+                ws = new WebSocket(url);
+                ws.onopen = function() {
+                    wsConnected = true;
+                    wsStatusEl.textContent = `🔌 Online (${streamedList.length} streams)`;
+                    wsStatusEl.style.color = '#0ecb81';
+                    if (wsFlushTimer) clearInterval(wsFlushTimer);
+                    wsFlushTimer = setInterval(flushDepthBuffer, 1000);
+                };
+                ws.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.data && data.data.bids && data.data.asks) {
+                            const symbol = data.stream.split('@')[0].toUpperCase();
+                            wsMessageBuffer.push({ symbol, data: data.data });
+                            if (wsMessageBuffer.length > 200) wsMessageBuffer.shift();
+                            // Mark that we've received data for this symbol
+                            obiReceived.add(symbol);
+                        }
+                    } catch (e) {}
+                };
+                ws.onclose = function() {
+                    wsConnected = false;
+                    wsStatusEl.textContent = '🔌 Offline';
+                    wsStatusEl.style.color = '#f6465d';
+                    if (wsFlushTimer) { clearInterval(wsFlushTimer);
+                        wsFlushTimer = null; }
+                    clearTimeout(wsReconnectTimer);
+                    wsReconnectTimer = setTimeout(connectWebSocket, 3000);
+                };
+                ws.onerror = function(e) { console.warn('WS error:', e); };
+            } catch (e) {
+                wsStatusEl.textContent = '🔌 Failed';
+                wsStatusEl.style.color = '#f6465d';
+            }
+        }
+
+        function flushDepthBuffer() {
+            if (wsMessageBuffer.length === 0) return;
+            const latestDepthMap = new Map();
+            while (wsMessageBuffer.length > 0) {
+                const msg = wsMessageBuffer.pop();
+                if (!latestDepthMap.has(msg.symbol)) latestDepthMap.set(msg.symbol, msg.data);
+            }
+            latestDepthMap.forEach((data, symbol) => {
+                depthCache[symbol] = {
+                    bids: data.bids.slice(0, 10).map(b => [parseFloat(b[0]), parseFloat(b[1])]),
+                    asks: data.asks.slice(0, 10).map(a => [parseFloat(a[0]), parseFloat(a[1])]),
+                    time: Date.now()
+                };
+            });
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // 4. API FETCH FUNCTIONS
+        // ──────────────────────────────────────────────────────────────
+        async function fetchCandles(symbol, interval = '1h', limit = 60) {
+            try {
+                const data = await proxyFetch(`${FUTURES_BASE}/fapi/v1/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
+                if (!data || !data.length) return null;
+                return data.map(k => ({
+                    o: parseFloat(k[1]),
+                    h: parseFloat(k[2]),
+                    l: parseFloat(k[3]),
+                    c: parseFloat(k[4]),
+                    v: parseFloat(k[5])
+                }));
+            } catch (e) { return null; }
+        }
+
+        async function fetchTicker(symbol) {
+            try {
+                const data = await proxyFetch(`${FUTURES_BASE}/fapi/v1/ticker/24hr?symbol=${symbol}`);
+                if (data && data.symbol) return data;
+                return null;
+            } catch (e) { return null; }
+        }
+
+        async function fetchOpenInterest(symbol) {
+            try {
+                const data = await proxyFetch(`${FUTURES_BASE}/fapi/v1/openInterest?symbol=${symbol}`);
+                if (data && data.openInterest) return parseFloat(data.openInterest);
+                return 0;
+            } catch (e) { return 0; }
+        }
+
+        async function fetchFundingRate(symbol) {
+            try {
+                const data = await proxyFetch(`${FUTURES_BASE}/fapi/v1/premiumIndex?symbol=${symbol}`);
+                if (data && data.lastFundingRate) return parseFloat(data.lastFundingRate);
+                return 0;
+            } catch (e) { return 0; }
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // 5. CORE INDICATOR FUNCTIONS
+        // ──────────────────────────────────────────────────────────────
+        function calculateVWAP(candles) {
+            if (!candles || candles.length === 0) return 0;
+            let cumPriceVol = 0,
+                cumVol = 0;
+            for (const c of candles) {
+                const typical = (c.h + c.l + c.c) / 3;
+                cumPriceVol += typical * c.v;
+                cumVol += c.v;
+            }
+            return cumVol > 0 ? cumPriceVol / cumVol : candles[candles.length - 1].c;
+        }
+
+        function calculateOBI(depth) {
+            if (!depth || !depth.bids || !depth.asks) return null;
+            if (Date.now() - depth.time > OBI_STALE_MS) return null;
+            const bidVol = depth.bids.reduce((s, b) => s + b[1], 0);
+            const askVol = depth.asks.reduce((s, a) => s + a[1], 0);
+            const total = bidVol + askVol || 1;
+            const imbalance = (bidVol - askVol) / total;
+            return { obi: imbalance * 100, bidVol, askVol, imbalance };
+        }
+
+        function calculateCVD(candles) {
+            if (!candles || candles.length < 5) return 0;
+            let cvd = 0;
+            for (let i = 1; i < candles.length; i++) {
+                const curr = candles[i];
+                const delta = curr.v * (curr.c > curr.o ? 1 : (curr.c < curr.o ? -1 : 0));
+                cvd += delta;
+            }
+            return cvd;
+        }
+
+        function calculateVolatility(candles) {
+            if (!candles || candles.length < 10) return 0.02;
+            let sum = 0;
+            for (let i = 1; i < candles.length; i++) {
+                sum += Math.abs((candles[i].c - candles[i - 1].c) / candles[i - 1].c);
+            }
+            return Math.min(0.1, sum / (candles.length - 1));
+        }
+
+        function calculateATR(candles, period = 14) {
+            if (!candles || candles.length < period + 1) return 0.01;
+            let trSum = 0;
+            for (let i = 1; i <= period; i++) {
+                const high = candles[candles.length - i].h;
+                const low = candles[candles.length - i].l;
+                const prevClose = candles[candles.length - i - 1].c;
+                trSum += Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose));
+            }
+            return trSum / period;
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // 6. HEURISTIC SCORE
+        // ──────────────────────────────────────────────────────────────
+        function computeHeuristicScore(fv, volatility, oiDelta, fundingRate, obi, btcTrendFactor, signalDirection) {
+            const features = {
+                vwapGap: Math.min(1, Math.abs(fv.diffPercent) / 5),
+                cvdStrength: Math.min(1, Math.abs(fv.cvdNorm) * 3),
+                volatility: Math.min(1, volatility * 20),
+                oiDelta: Math.min(1, Math.abs(oiDelta || 0) / 0.5),
+                funding: Math.min(1, Math.abs(fundingRate || 0) * 50),
+                obi: obi !== null ? Math.min(1, Math.abs(obi) / 50) : 0.5,
+            };
+            const weights = { vwapGap: 0.25, cvdStrength: 0.20, volatility: 0.15, oiDelta: 0.15, funding: 0.10, obi: 0.15 };
+            let score = 0,
+                totalWeight = 0;
+            for (const [key, val] of Object.entries(features)) {
+                score += val * weights[key];
+                totalWeight += weights[key];
+            }
+            let probability = score / totalWeight;
+
+            if (btcTrendFactor > 0.3 && signalDirection < 0) probability *= 0.7;
+            if (btcTrendFactor < -0.3 && signalDirection > 0) probability *= 0.7;
+
+            const direction = fv.diffPercent > 0 ? 1 : -1;
+            return { probability: Math.min(0.95, probability), direction };
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // 7. DYNAMIC THRESHOLD
+        // ──────────────────────────────────────────────────────────────
+        function getDynamicThreshold(volatility, baseThreshold) {
+            if (volatility > 0.05) return baseThreshold * 1.6;
+            if (volatility > 0.02) return baseThreshold * 1.2;
+            return baseThreshold;
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // 8. KELLY CRITERION
+        // ──────────────────────────────────────────────────────────────
+        function calculateKelly(winRate, avgWin, avgLoss) {
+            if (avgLoss === 0) return 0.05;
+            const p = winRate / 100;
+            const q = 1 - p;
+            const b = avgWin / avgLoss;
+            if (b <= 0) return 0.05;
+            const kelly = p - (q / b);
+            return Math.max(0.02, Math.min(0.25, kelly));
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // 9. LIQUIDITY SWEEP DETECTION
+        // ──────────────────────────────────────────────────────────────
+        function detectLiquiditySweep(candles) {
+            if (!candles || candles.length < 20) return false;
+            const recent = candles.slice(-10);
+            const high = Math.max(...recent.map(c => c.h));
+            const low = Math.min(...recent.map(c => c.l));
+            const last = recent[recent.length - 1];
+            const prev = recent[recent.length - 2];
+            if (last.h > high && last.c < high && prev.c < high) return true;
+            if (last.l < low && last.c > low && prev.c > low) return true;
+            return false;
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // 10. COMPUTE FAIR VALUE
+        // ──────────────────────────────────────────────────────────────
+        const W_VWAP = 0.55;
+        const W_CVD = 0.45;
+
+        function computeFairValue(candles, windowSize) {
+            const window = candles.slice(-windowSize);
+            const price = candles[candles.length - 1].c;
+            const vwap = calculateVWAP(window);
+            const cvd = calculateCVD(window);
+            const totalVol = window.slice(1).reduce((s, c) => s + c.v, 0);
+            const cvdNorm = Math.max(-1, Math.min(1, cvd / (totalVol || 1)));
+            const vwapGap = (vwap - price) / price;
+            const cvdPull = cvdNorm * 0.02;
+            const blendedOffset = (W_VWAP * vwapGap) + (W_CVD * cvdPull);
+            const fairPrice = price * (1 + blendedOffset);
+            const diffPercent = blendedOffset * 100;
+            return { price, vwap, fairPrice, diffPercent, cvd, cvdNorm };
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // 11. LIVE SCAN - determines OBI state: live, connecting, or unavailable
+        // ──────────────────────────────────────────────────────────────
+        function getOBIState(symbol, depth) {
+            if (!depth || !depth.bids || !depth.asks) {
+                // Check if we've ever received data for this symbol
+                if (obiReceived.has(symbol)) {
+                    return { value: null, state: 'unavailable', label: '🚫 No orderbook' };
+                } else {
+                    // We're subscribed but haven't received data yet
+                    if (streamedSymbols.has(symbol) && wsConnected) {
+                        return { value: null, state: 'connecting', label: '⏳ Connecting…' };
+                    } else {
+                        return { value: null, state: 'unavailable', label: '🚫 No orderbook' };
+                    }
+                }
+            }
+            if (Date.now() - depth.time > OBI_STALE_MS) {
+                return { value: null, state: 'stale', label: '⏳ Stale…' };
+            }
+            const obiData = calculateOBI(depth);
+            if (obiData) {
+                return { value: obiData.obi, state: 'live', label: `${obiData.obi.toFixed(1)}` };
+            }
+            return { value: null, state: 'unavailable', label: '🚫 No orderbook' };
+        }
+
+        function buildLiveResult(symbol, candles, depth, ticker, oi, fundingRate) {
+            if (!candles || candles.length < 55) return null;
+            const fv = computeFairValue(candles, 50);
+            const obiState = getOBIState(symbol, depth);
+            const volatility = calculateVolatility(candles);
+            const atr = calculateATR(candles, 14);
+            const sweep = detectLiquiditySweep(candles);
+
+            let oiDelta = 0;
+            if (oiHistory[symbol] !== undefined) {
+                oiDelta = (oi - oiHistory[symbol]) / oiHistory[symbol];
+            }
+            oiHistory[symbol] = oi;
+
+            let btcFactor = 0;
+            if (symbol === 'BTCUSDT' && candles.length >= 20) {
+                const btcVWAP = calculateVWAP(candles.slice(-20));
+                const btcPrice = candles[candles.length - 1].c;
+                const vwapRatio = (btcPrice - btcVWAP) / btcVWAP;
+                btcFactor = vwapRatio > 0.01 ? 1 : (vwapRatio < -0.01 ? -1 : 0);
+                btcTrend = btcFactor;
+            } else {
+                btcFactor = btcTrend;
+            }
+
+            const signalDirection = fv.diffPercent > 0 ? 1 : -1;
+            const heuristic = computeHeuristicScore(fv, volatility, oiDelta, fundingRate,
+                obiState.value, btcFactor, signalDirection);
+
+            const bt = backtestedThresholds[symbol];
+            const baseThreshold = bt ? bt.threshold : DEFAULT_THRESHOLD;
+            const threshold = getDynamicThreshold(volatility, baseThreshold);
+
+            let status = 'fair';
+            let signalLabel = 'neutral';
+            if (heuristic.probability > 0.6 && fv.diffPercent > 0) {
+                status = 'undervalued';
+                signalLabel = 'bullish';
+            } else if (heuristic.probability > 0.6 && fv.diffPercent < 0) {
+                status = 'overvalued';
+                signalLabel = 'bearish';
+            } else if (Math.abs(fv.diffPercent) > threshold) {
+                status = fv.diffPercent > 0 ? 'undervalued' : 'overvalued';
+            }
+
+            let avgWin = 1.5,
+                avgLoss = 1.0;
+            if (bt && bt.avgWin !== undefined && bt.avgLoss !== undefined) {
+                avgWin = bt.avgWin;
+                avgLoss = bt.avgLoss;
+            }
+            const winRate = bt ? bt.testAccuracy || 55 : 55;
+            const kelly = calculateKelly(winRate, avgWin, avgLoss);
+
+            return {
+                symbol,
+                price: fv.price,
+                vwap: fv.vwap,
+                fairPrice: fv.fairPrice,
+                diffPercent: fv.diffPercent,
+                status,
+                obi: obiState.value,
+                obiState: obiState.state,
+                obiLabel: obiState.label,
+                cvd: fv.cvd,
+                oi,
+                fundingRate,
+                threshold,
+                isValidated: !!bt,
+                testAccuracy: bt ? bt.testAccuracy : null,
+                testN: bt ? bt.testN : null,
+                change24h: ticker ? parseFloat(ticker.priceChangePercent) : 0,
+                volume24h: ticker ? parseFloat(ticker.quoteVolume) : 0,
+                volatility,
+                heuristicProbability: heuristic.probability,
+                signalLabel,
+                kelly,
+                sweep,
+                atr,
+                time: new Date().toLocaleTimeString('bn-BD')
+            };
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // 12. SCAN ALL
+        // ──────────────────────────────────────────────────────────────
+        async function scanAll() {
+            if (isScanning) return;
+            isScanning = true;
+            try {
+                const symbols = [...watchlist];
+                const results = {};
+                const batchSize = 3;
+                for (let i = 0; i < symbols.length; i += batchSize) {
+                    const batch = symbols.slice(i, i + batchSize);
+                    const promises = batch.map(async (sym) => {
+                        try {
+                            const [candles, ticker, oi, funding] = await Promise.all([
+                                fetchCandles(sym, LIVE_INTERVAL_TF, LIVE_CANDLE_LIMIT),
+                                fetchTicker(sym),
+                                fetchOpenInterest(sym),
+                                fetchFundingRate(sym)
+                            ]);
+                            if (!candles) return null;
+                            const depth = depthCache[sym] || null;
+                            return buildLiveResult(sym, candles, depth, ticker, oi, funding);
+                        } catch (e) {
+                            console.warn(`Error scanning ${sym}:`, e);
+                            return null;
+                        }
+                    });
+                    const batchResults = await Promise.all(promises);
+                    for (const result of batchResults)
+                        if (result) results[result.symbol] = result;
+                    if (i + batchSize < symbols.length) await new Promise(r => setTimeout(r, 500));
+                }
+                fairValueData = results;
+                renderAll();
+                lastUpdateEl.textContent = new Date().toLocaleTimeString('bn-BD');
+            } catch (e) {
+                console.error('scanAll failed:', e);
+            } finally {
+                isScanning = false;
+            }
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // 13. RENDER - shows OBI with state indicator
+        // ──────────────────────────────────────────────────────────────
+        function renderAll() {
+            const entries = Object.values(fairValueData);
+            const total = entries.length;
+            const undervalued = entries.filter(e => e.status === 'undervalued');
+            const overvalued = entries.filter(e => e.status === 'overvalued');
+            const fair = entries.filter(e => e.status === 'fair');
+            const signals = entries.filter(e => e.heuristicProbability > 0.65);
+
+            totalCoinsEl.textContent = total;
+            undervaluedCountEl.textContent = undervalued.length;
+            overvaluedCountEl.textContent = overvalued.length;
+            fairCountEl.textContent = fair.length;
+            aiSignalCountEl.textContent = signals.length;
+
+            if (total === 0) {
+                fvContainer.innerHTML = `<span class="fv-empty">⏳ No data yet. Click Scan or wait for auto-update...</span>`;
+                return;
+            }
+
+            entries.sort((a, b) => (b.heuristicProbability || 0) - (a.heuristicProbability || 0));
+
+            let html = '';
+            for (const e of entries.slice(0, MAX_COINS)) {
+                const statusClass = e.status;
+                const statusLabel = e.status === 'undervalued' ? '🟢 Undervalued' :
+                    (e.status === 'overvalued' ? '🔴 Overvalued' : '⚖️ Fair');
+                const diffColor = e.diffPercent > 0 ? 'positive' : (e.diffPercent < 0 ? 'negative' : '');
+                const barColor = e.diffPercent > 0 ? 'bull' : (e.diffPercent < 0 ? 'bear' : '');
+                const barWidth = Math.min(100, Math.abs(e.diffPercent) * 5);
+
+                const scoreClass = e.heuristicProbability > 0.7 ? 'high' : (e.heuristicProbability > 0.55 ? 'medium' :
+                'low');
+                const signalLabel = e.signalLabel === 'bullish' ? '🟢 BULL' : (e.signalLabel === 'bearish' ? '🔴 BEAR' :
+                    '⚪ NEUTRAL');
+
+                const kellyPct = (e.kelly * 100).toFixed(1);
+                const sweepIcon = e.sweep ? '🧹 Sweep!' : '';
+
+                const itemClass = e.isValidated ? '' : 'unvalidated';
+                const thresholdRow = e.isValidated ?
+                    `<div class="row5 validated">✅ Validated threshold ${e.threshold.toFixed(1)}% · acc ${e.testAccuracy.toFixed(0)}% (n=${e.testN})</div>` :
+                    `<div class="row5 unvalidated">⚠️ Default threshold ${e.threshold.toFixed(1)}%</div>`;
+
+                // OBI display with state-aware styling
+                let obiDisplay;
+                if (e.obiState === 'live') {
+                    obiDisplay =
+                        `<span><span class="label">OBI</span> <span class="value obi-live">${e.obiLabel} 🟢</span></span>`;
+                } else if (e.obiState === 'connecting') {
+                    obiDisplay =
+                        `<span><span class="label">OBI</span> <span class="value obi-connecting">${e.obiLabel} 🟡</span></span>`;
+                } else {
+                    obiDisplay =
+                        `<span><span class="label">OBI</span> <span class="value obi-unavailable">${e.obiLabel} 🔴</span></span>`;
+                }
+
+                html += `
+                    <div class="fv-item ${itemClass}">
+                        <div class="row1">
+                            <span class="sym">${e.symbol}</span>
+                            <span class="ai-score ${scoreClass}">📊 ${(e.heuristicProbability*100).toFixed(0)}% ${signalLabel}</span>
+                        </div>
+                        <div class="row2">
+                            <span class="price">$${e.price.toFixed(4)}</span>
+                            <span class="diff ${diffColor}">${e.diffPercent > 0 ? '+' : ''}${e.diffPercent.toFixed(2)}%</span>
+                            <span style="font-size:0.5rem;color:#5a6a7a;">FV: $${e.fairPrice.toFixed(4)}</span>
+                        </div>
+                        <div class="row3">
+                            <span><span class="label">VWAP</span> <span class="value">$${e.vwap.toFixed(4)}</span></span>
+                            <span><span class="label">CVD</span> <span class="value">${e.cvd.toFixed(0)}</span></span>
+                            ${obiDisplay}
+                            <span><span class="label">OI</span> <span class="value">${(e.oi/1000000).toFixed(2)}M</span></span>
+                            <span><span class="label">Funding</span> <span class="value">${(e.fundingRate*100).toFixed(4)}%</span></span>
+                            <span><span class="label">ATR</span> <span class="value">${(e.atr*100).toFixed(2)}%</span></span>
+                        </div>
+                        <div class="row4">
+                            <span>24h: ${e.change24h.toFixed(2)}%</span>
+                            <span>Vol: $${(e.volume24h/1000000).toFixed(1)}M</span>
+                            <span>Volatility: ${(e.volatility*100).toFixed(1)}%</span>
+                            <span>Kelly: ${kellyPct}%</span>
+                            ${sweepIcon ? `<span style="color:#f59e0b;">${sweepIcon}</span>` : ''}
+                            <div class="bar-bg"><div class="bar-fill ${barColor}" style="width:${barWidth}%;"></div></div>
+                        </div>
+                        ${thresholdRow}
+                        <div class="row6">🧠 Real OBI for ALL coins · ${streamedSymbols.size} active streams</div>
+                    </div>
+                `;
+            }
+            fvContainer.innerHTML = html;
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // 14. TOP 20 LOAD
+        // ──────────────────────────────────────────────────────────────
+        async function loadTopCoins() {
+            try {
+                const tickers = await proxyFetch(`${FUTURES_BASE}/fapi/v1/ticker/24hr`);
+                if (!Array.isArray(tickers)) return;
+                const usdtPairs = tickers.filter(t => t.symbol.endsWith('USDT') && t.symbol.length > 6 &&
+                    !t.symbol.includes('UP') && !t.symbol.includes('DOWN'));
+                usdtPairs.sort((a, b) => Math.abs(parseFloat(b.priceChangePercent) || 0) -
+                    Math.abs(parseFloat(a.priceChangePercent) || 0));
+                const top = usdtPairs.slice(0, 20).map(t => t.symbol);
+                const majors = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT'];
+                for (const m of majors)
+                    if (!top.includes(m)) { top.pop();
+                        top.push(m); }
+                watchlist = top.slice(0, MAX_COINS);
+                connectWebSocket();
+                await scanAll();
+            } catch (e) { console.warn('Load top coins error:', e); }
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // 15. BACKTEST ENGINE (unchanged from v14)
+        // ──────────────────────────────────────────────────────────────
+        function evaluateThreshold(points, threshold) {
+            let underTotal = 0,
+                underCorrect = 0,
+                overTotal = 0,
+                overCorrect = 0;
+            let underWins = 0,
+                underLosses = 0,
+                overWins = 0,
+                overLosses = 0;
+            for (const p of points) {
+                if (p.diffPercent > threshold) {
+                    underTotal++;
+                    if (p.futureReturn > 0) {
+                        underCorrect++;
+                        underWins += p.futureReturn;
+                    } else {
+                        underLosses += Math.abs(p.futureReturn);
+                    }
+                } else if (p.diffPercent < -threshold) {
+                    overTotal++;
+                    if (p.futureReturn < 0) {
+                        overCorrect++;
+                        overWins += Math.abs(p.futureReturn);
+                    } else {
+                        overLosses += p.futureReturn;
+                    }
+                }
+            }
+            const total = underTotal + overTotal;
+            const correct = underCorrect + overCorrect;
+            const accuracy = total > 0 ? (correct / total * 100) : null;
+            const score = total > 0 ? wilsonLowerBound(correct, total) : -1;
+            const totalWins = underCorrect + overCorrect;
+            const totalLosses = (underTotal - underCorrect) + (overTotal - overCorrect);
+            const avgWin = totalWins > 0 ? (underWins + overWins) / totalWins : 1.5;
+            const avgLoss = totalLosses > 0 ? (underLosses + overLosses) / totalLosses : 1.0;
+            return { threshold, n: total, accuracy, score, avgWin, avgLoss };
+        }
+
+        function wilsonLowerBound(correct, total, z = 1.96) {
+            if (total === 0) return 0;
+            const p = correct / total;
+            const denom = 1 + (z * z) / total;
+            const centre = p + (z * z) / (2 * total);
+            const margin = z * Math.sqrt((p * (1 - p) + (z * z) / (4 * total)) / total);
+            return (centre - margin) / denom;
+        }
+
+        async function runBacktest() {
+            const testSymbols = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'ADAUSDT', 'DOGEUSDT', 'AVAXUSDT', 'DOTUSDT'];
+            const windowSize = 50;
+            const lookAhead = LOOKAHEAD_HOURS;
+            const thresholds = [0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1.0, 1.2];
+            const CANDLE_LIMIT = 1000;
+            const backtestBtn = document.getElementById('backtestBtn');
+            const originalText = backtestBtn.textContent;
+            backtestBtn.textContent = '⏳ Testing...';
+            backtestBtn.disabled = true;
+            const perSymbolResults = [];
+            try {
+                for (const sym of testSymbols) {
+                    const candles = await fetchCandles(sym, LIVE_INTERVAL_TF, CANDLE_LIMIT);
+                    if (!candles || candles.length < windowSize + lookAhead + 50) continue;
+                    const points = [];
+                    for (let i = windowSize; i < candles.length - lookAhead; i += lookAhead) {
+                        const window = candles.slice(0, i + 1);
+                        const fv = computeFairValue(window, windowSize);
+                        const futurePrice = candles[i + lookAhead].c;
+                        const futureReturn = (futurePrice - fv.price) / fv.price * 100;
+                        points.push({ diffPercent: fv.diffPercent, futureReturn });
+                    }
+                    if (points.length < 40) continue;
+                    const splitIdx = Math.floor(points.length * 0.7);
+                    const trainPoints = points.slice(0, splitIdx);
+                    const testPoints = points.slice(splitIdx);
+                    let bestTrain = null;
+                    for (const t of thresholds) {
+                        const res = evaluateThreshold(trainPoints, t);
+                        if (res.n >= MIN_SAMPLE_SIZE && res.accuracy !== null) {
+                            if (!bestTrain || res.score > bestTrain.score) bestTrain = res;
+                        }
+                    }
+                    if (!bestTrain) continue;
+                    const testRes = evaluateThreshold(testPoints, bestTrain.threshold);
+                    perSymbolResults.push({
+                        symbol: sym,
+                        threshold: bestTrain.threshold,
+                        trainAccuracy: bestTrain.accuracy,
+                        trainN: bestTrain.n,
+                        testAccuracy: testRes.accuracy,
+                        testN: testRes.n,
+                        avgWin: testRes.avgWin,
+                        avgLoss: testRes.avgLoss
+                    });
+                    if (testRes.n >= MIN_SAMPLE_SIZE && testRes.accuracy !== null && testRes.accuracy > MIN_TEST_ACCURACY) {
+                        backtestedThresholds[sym] = {
+                            threshold: bestTrain.threshold,
+                            testAccuracy: testRes.accuracy,
+                            testN: testRes.n,
+                            avgWin: testRes.avgWin,
+                            avgLoss: testRes.avgLoss
+                        };
+                    } else {
+                        delete backtestedThresholds[sym];
+                    }
+                }
+                renderBacktestPanel(perSymbolResults, lookAhead);
+                await scanAll();
+            } catch (e) {
+                console.error('Backtest error:', e);
+                alert('❌ Backtest failed. Please try again later.');
+            } finally {
+                backtestBtn.textContent = originalText;
+                backtestBtn.disabled = false;
+            }
+        }
+
+        function renderBacktestPanel(results, lookAhead) {
+            const panel = document.getElementById('btPanel');
+            const note = document.getElementById('btNote');
+            const table = document.getElementById('btTable');
+            const summary = document.getElementById('btSummary');
+            note.innerHTML = `📊 Threshold selection using Wilson score (confidence-adjusted). 
+                              Dynamic thresholds: HIGH volatility → HIGHER threshold (1.6x).
+                              Kelly uses actual backtest avgWin/avgLoss.
+                              Samples: non-overlapping (${lookAhead}h lookahead). Test accuracy must beat ${MIN_TEST_ACCURACY}% to go live.`;
+            if (results.length === 0) {
+                table.innerHTML = `<tr><td>No symbol had enough qualifying non-overlapping signals.</td></tr>`;
+                summary.textContent = '';
+                panel.classList.add('show');
+                return;
+            }
+            let rows =
+                `<tr><th>Coin</th><th>Threshold</th><th>Train Acc (n)</th><th>Test Acc (n)</th><th>Live?</th><th>Kelly %</th></tr>`;
+            for (const r of results) {
+                const trainClass = r.trainN >= MIN_SAMPLE_SIZE ? 'n-ok' : 'n-low';
+                const testClass = (r.testN >= MIN_SAMPLE_SIZE && r.testAccuracy !== null && r.testAccuracy > MIN_TEST_ACCURACY) ?
+                    'n-ok' : 'n-low';
+                const fedLive = backtestedThresholds[r.symbol] ? '✅' : '⚠️';
+                const kelly = calculateKelly(r.testAccuracy || 55, r.avgWin || 1.5, r.avgLoss || 1.0);
+                rows += `<tr>
+                            <td>${r.symbol}</td>
+                            <td>${r.threshold.toFixed(1)}%</td>
+                            <td class="${trainClass}">${r.trainAccuracy.toFixed(1)}% (n=${r.trainN})</td>
+                            <td class="${testClass}">${r.testAccuracy !== null ? r.testAccuracy.toFixed(1) + '%' : '—'} (n=${r.testN})</td>
+                            <td>${fedLive}</td>
+                            <td>${(kelly*100).toFixed(1)}%</td>
+                        </tr>`;
+            }
+            table.innerHTML = rows;
+            const validTest = results.filter(r => r.testN >= MIN_SAMPLE_SIZE && r.testAccuracy !== null && r.testAccuracy >
+                MIN_TEST_ACCURACY);
+            if (validTest.length > 0) {
+                const avgTest = validTest.reduce((s, r) => s + r.testAccuracy, 0) / validTest.length;
+                summary.textContent =
+                    `📌 Avg test accuracy: ${avgTest.toFixed(1)}%. ${validTest.length} coin(s) validated live. Kelly uses actual backtest R:R.`;
+            } else {
+                summary.textContent = `⚠️ No coin passed the ${MIN_TEST_ACCURACY}% test accuracy threshold.`;
+            }
+            panel.classList.add('show');
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // 16. WEBHOOK SIMULATION
+        // ──────────────────────────────────────────────────────────────
+        function simulateWebhook() {
+            const entries = Object.values(fairValueData);
+            const signals = entries.filter(e => e.heuristicProbability > 0.7 && e.status !== 'fair');
+            if (signals.length === 0) {
+                alert('📊 No high-confidence signals right now.');
+                return;
+            }
+            let msg = '📊 *QUANT SIGNALS*\n';
+            for (const s of signals.slice(0, 5)) {
+                const dir = s.signalLabel === 'bullish' ? '🟢 LONG' : '🔴 SHORT';
+                msg += `\n${s.symbol} ${dir}\n`;
+                msg += `💰 Entry: $${s.price.toFixed(4)}\n`;
+                msg += `📊 Confidence: ${(s.heuristicProbability*100).toFixed(0)}%\n`;
+                msg += `📈 Kelly: ${(s.kelly*100).toFixed(1)}%\n`;
+                msg += `📊 OBI: ${s.obi !== null ? s.obi.toFixed(1) : s.obiLabel}\n`;
+                msg += `🧹 ${s.sweep ? 'Liquidity Sweep Detected!' : 'No sweep'}\n`;
+                msg += `---\n`;
+            }
+            msg += `\n🔔 Webhook would send this to Telegram/3Commas.`;
+            alert(msg);
+        }
+
+        // ──────────────────────────────────────────────────────────────
+        // 17. CONTROLS
+        // ──────────────────────────────────────────────────────────────
+        document.getElementById('scanBtn').addEventListener('click', scanAll);
+        document.getElementById('loadTopBtn').addEventListener('click', loadTopCoins);
+        document.getElementById('backtestBtn').addEventListener('click', runBacktest);
+        document.getElementById('webhookBtn').addEventListener('click', simulateWebhook);
+
+        document.getElementById('addBtn').addEventListener('click', () => {
+            let val = document.getElementById('coinInput').value.trim().toUpperCase();
+            if (!val) return;
+            if (!val.endsWith('USDT')) val += 'USDT';
+            if (!watchlist.includes(val)) {
+                watchlist.push(val);
+                connectWebSocket();
+                scanAll();
+            }
+            document.getElementById('coinInput').value = '';
+        });
+
+        document.getElementById('wsToggle').addEventListener('click', () => {
+            if (wsConnected) {
+                clearTimeout(wsReconnectTimer);
+                if (ws) {
+                    try {
+                        ws.onopen = null;
+                        ws.onmessage = null;
+                        ws.onclose = null;
+                        ws.onerror = null;
+                        ws.close();
+                    } catch (e) {}
+                    ws = null;
+                }
+                wsConnected = false;
+                wsStatusEl.textContent = '🔌 Offline';
+                wsStatusEl.style.color = '#f6465d';
+                document.getElementById('wsToggle').textContent = '🔌 WS';
+                document.getElementById('wsToggle').style.background = '#7c3aed';
+                if (wsFlushTimer) { clearInterval(wsFlushTimer);
+                    wsFlushTimer = null; }
+            } else {
+                connectWebSocket();
+                document.getElementById('wsToggle').textContent = '🔌 Disconnect';
+                document.getElementById('wsToggle').style.background = '#f6465d';
+            }
+        });
+
+        document.getElementById('coinInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('addBtn').click();
+        });
+
+        // ──────────────────────────────────────────────────────────────
+        // 18. INIT
+        // ──────────────────────────────────────────────────────────────
+        (async function init() {
+            await loadTopCoins();
+            setInterval(scanAll, UPDATE_INTERVAL);
+        })();
+    </script>
+</body>
+</html>
